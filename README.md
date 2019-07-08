@@ -10,8 +10,8 @@
 pip install -r requirements.txt
 ```
 3. Рекомендуется использовать [virtualenv/venv](https://docs.python.org/3/library/venv.html) для изоляции проекта.
-4. Для работы с Api SuperJob требуется `Secret key`, чтобы получить его, зарегистрируйте приложение на [api.superjob](https://api.superjob.ru/). Полученный ключ следует положить в файл `.env` под именем `KEY`.
-5. Запустите файл `main.py`.   
+4. Для работы с Api SuperJob требуется `Secret key`, чтобы получить его, зарегистрируйте приложение на [api.superjob](https://api.superjob.ru/). Полученный ключ следует положить в файл `.env` под именем `SUPERJOB_SECRET_KEY`.
+5. Запустите файл `salary_analyzer.py`.   
 
 ### Цель проекта
 
