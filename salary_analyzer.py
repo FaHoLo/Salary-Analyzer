@@ -1,11 +1,14 @@
-import requests
 import os
+
 from dotenv import load_dotenv
+import requests
 from terminaltables import AsciiTable
+
 
 def main():
     load_dotenv()
     print_both_sites_statistics_table()
+
 
 def print_both_sites_statistics_table():
     languages = [
@@ -27,12 +30,14 @@ def print_both_sites_statistics_table():
     print()
     print_the_table(superjob_statistics, 'Super Job Moscow')
 
+
 def get_all_languages_statistics_hh(languages):
     languages_statistics = {}
     for language in languages:
         request_arguments = collect_hh_request(language)
         languages_statistics[language] = get_language_statistics(language, request_arguments, process_page_hh, predict_rub_salary_hh)
     return languages_statistics
+
 
 def collect_hh_request(language):
     request_arguments = {
@@ -44,10 +49,11 @@ def collect_hh_request(language):
             'per_page': 100,
             'area': 1,
             'period': 30,
-        },  
+        },
         'url': 'https://api.hh.ru/vacancies',
     }
     return request_arguments
+
 
 def get_all_languages_statistics_sj(languages):
     languages_statistics = {}
@@ -55,6 +61,7 @@ def get_all_languages_statistics_sj(languages):
         request_arguments = collect_sj_request(language)
         languages_statistics[language] = get_language_statistics(language, request_arguments, process_page_sj, predict_rub_salary_sj)
     return languages_statistics
+
 
 def collect_sj_request(language):
     superjob_key = os.getenv('SUPERJOB_SECRET_KEY')
@@ -70,6 +77,7 @@ def collect_sj_request(language):
     }
     return request_arguments
 
+
 def get_language_statistics(language, request_arguments, processing_page_function, predict_rub_salary_function):
     vacancies, vacancies_found = get_vacancies(language, request_arguments, processing_page_function)
     average_salary, vacancies_processed = count_average_salary(vacancies, predict_rub_salary_function)
@@ -79,6 +87,7 @@ def get_language_statistics(language, request_arguments, processing_page_functio
         'average_salary': average_salary,
     }
     return language_statistics
+
 
 def get_vacancies(language, request_arguments, processing_page_function):
     headers = request_arguments['headers']
@@ -93,9 +102,11 @@ def get_vacancies(language, request_arguments, processing_page_function):
         response.raise_for_status()
         page_data = response.json()
         vacancies_found, pages_number, vacancies = processing_page_function(page_data, vacancies)
-        if not vacancies_found: return None, None
+        if not vacancies_found:
+            return None, None
         page += 1
     return vacancies, vacancies_found
+
 
 def process_page_hh(page_data, vacancies):
     vacancies_found = page_data['found']
@@ -104,17 +115,22 @@ def process_page_hh(page_data, vacancies):
         vacancies.append(vacancy)
     return vacancies_found, pages_number, vacancies
 
+
 def process_page_sj(page_data, vacancies):
     vacancies_found = page_data['total']
-    if not vacancies_found: return None, None, None
+    if not vacancies_found:
+        return None, None, None
     pages_number = vacancies_found // 100 + 1
-    if vacancies_found % 100 == 0: pages_number -= 1
+    if vacancies_found % 100 == 0:
+        pages_number -= 1
     for vacancy in page_data['objects']:
         vacancies.append(vacancy)
     return vacancies_found, pages_number, vacancies
 
+
 def count_average_salary(vacancies, predict_rub_salary_function):
-    if vacancies == None: return None, None
+    if vacancies is None:
+        return None, None
     sum_of_salaries = 0
     number_of_salaries = 0
     for vacancy in vacancies:
@@ -124,20 +140,26 @@ def count_average_salary(vacancies, predict_rub_salary_function):
         else:
             sum_of_salaries = sum_of_salaries + current_salery
             number_of_salaries += 1
-    if number_of_salaries == 0: return None, None
+    if number_of_salaries == 0:
+        return None, None
     average_salary = sum_of_salaries / number_of_salaries
     return int(average_salary), number_of_salaries
 
+
 def predict_rub_salary_hh(vacancy):
     salary = vacancy['salary']
-    if salary is None or salary['currency'] != 'RUR': return None
-    predicted_salary = predict_salary(salary['from'],salary['to'])
+    if salary is None or salary['currency'] != 'RUR':
+        return None
+    predicted_salary = predict_salary(salary['from'], salary['to'])
     return predicted_salary
 
+
 def predict_rub_salary_sj(vacancy):
-    if vacancy['currency'] != 'rub': return None
-    predicted_salary = predict_salary(vacancy['payment_from'],vacancy['payment_to'])
+    if vacancy['currency'] != 'rub':
+        return None
+    predicted_salary = predict_salary(vacancy['payment_from'], vacancy['payment_to'])
     return predicted_salary
+
 
 def predict_salary(salary_from, salary_to):
     if not salary_from and not salary_to:
@@ -153,6 +175,7 @@ def predict_salary(salary_from, salary_to):
         predicted_salary = predicted_salary * 1000
     return predicted_salary
 
+
 def print_the_table(languages_statistics, title):
     table_data = [[
         'Язык программирования',
@@ -167,9 +190,10 @@ def print_the_table(languages_statistics, title):
             language_stats['vacancies_found'],
             language_stats['vacancies_processed'],
             language_stats['average_salary'],
-        ]]) 
+        ]])
     table = AsciiTable(table_data, title)
     print(table.table)
+
 
 if __name__ == '__main__':
     main()
